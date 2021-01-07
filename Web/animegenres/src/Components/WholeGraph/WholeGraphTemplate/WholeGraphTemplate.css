@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=Montserrat:wght@100&family=Redressed&display=swap');
+
+
+
+.whole-graph-template {
+  background-color: #010B14;
+  margin: auto;
+  text-align: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.whole-graph-template-title {
+  padding-top: 50px;
+  font-weight: bold;
+  font-family: 'Dancing Script', cursive;
+  font-size: 50px;
+}
+
+.whole-graph-template-subtitle {
+  width: 40%;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-family: 'Dancing Script', cursive;
+}
+
+
+a:link {
+  color: #f72585;
+  text-decoration: none;
+}
+a:visited {
+  color: #f72585;
+}
+a:hover {
+  color: #4361ee;
+}
+
+
+.whole-graph-template-instructions-title {
+  margin-top: 20px;
+}
+
+.whole-graph-template-instructions {
+  width: 40%;
+  margin: auto;
+  text-align: left;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+li::marker {
+  content: "\2605 ";
+  color: #f72585;
+  font-size: 9px;
+}
+
+li > span {
+  margin: 5px;
+}
+
+
+
+.whole-graph-template-selected-year {
+  text-align: center;
+  font-size: 28px;
+  font-family: 'Dancing Script', cursive;
+}
+
+.whole-graph-template-container {
+  background-color: #010B14;
+  color: #f7ede2;
+  width: 100%;
+  padding-top: 30px;
+  position: relative;
+}
+
+.whole-graph-template-tooltip {
+  position: absolute;
+  background-color: none;
+  top: 30%;
+  right: 10%;
+  width: 200px;
+  height: 200px;
+  border-radius: 100px;
+  text-align: center;
+  color: white;
+}
+
+.whole-graph-template-tooltip-title {
+  display: block;
+  font-size: 32px;
+  font-family: 'Dancing Script', cursive;
+  margin-bottom: 10px;
+}
+.whole-graph-template-tooltip-info {
+  display: block;
+  font-size: 14px;
+}
