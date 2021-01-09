@@ -1,12 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=Montserrat:wght@100&family=Redressed&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=Montserrat:wght@300;600&family=Redressed&display=swap');
 
-#anime-graph-container {
-  position: relative;
-  width: 100%;
-  margin: auto;
-}
-
-.whole-graph-template {
+/**********************************************************************/
+/*************** Container for the entire page ************************/
+/**********************************************************************/
+#whole-graph-petalscircles {
   background-color: var(--dark-background);
   margin: auto;
   text-align: center;
@@ -14,95 +11,90 @@
   font-family: 'Montserrat', sans-serif;
 }
 
-.whole-graph-template-title {
-  padding-top: 50px;
+
+/**********************************************************************/
+/************************** Hero section ******************************/
+/**********************************************************************/
+#whole-graph-petalscircles-hero {
+  width: 50%;
+  text-align: center;
+  margin: auto;
+  margin-bottom: 30px;
+}
+.whole-graph-petalscircles-title {
+  padding-top: 12%;
   font-weight: bold;
   font-family: 'Dancing Script', cursive;
-  font-size: 50px;
+  font-size: 55px;
 }
-
-.whole-graph-template-subtitle {
-  width: 40%;
+.whole-graph-petalscircles-subtitle {
   margin: auto;
   margin-top: 20px;
   margin-bottom: 20px;
   font-family: 'Dancing Script', cursive;
+  font-size: 22px;
 }
-
-
-a:link {
+.whole-graph-petalscircles-subtitle a:link {
   color: var(--pink-colour);
   text-decoration: none;
 }
-a:visited {
+.whole-graph-petalscircles-subtitle a:visited {
   color: var(--pink-colour);
 }
-a:hover {
+.whole-graph-petalscircles-subtitle a:hover {
   color: var(--purple-colour);
 }
-
-
-.whole-graph-template-instructions-title {
-  margin-top: 20px;
+.whole-graph-petalscircles-instructions {
+  margin-bottom: 10px;
+  margin-top: 50px;
 }
-
-.whole-graph-template-instructions {
-  width: 40%;
+.whole-graph-petalscircles-instructions-title {
+  padding: 0;
+  margin-bottom: 7px;
+}
+.whole-graph-petalscircles-instructions-list {
   margin: auto;
   text-align: left;
   font-size: 12px;
-  margin-bottom: 20px;
+  list-style-position: inside;
 }
-
-li::marker {
-  content: "\2605 ";
+.whole-graph-petalscircles-instructions-list li::marker {
+  content: "\29BF";
   color: var(--pink-colour);
+  font-size: 15px;
+}
+.whole-graph-petalscircles-instructions-list li > span {
+  margin-left: 7px;
+}
+.whole-graph-petalscircles-disclaimer {
   font-size: 9px;
 }
 
-li > span {
-  margin: 5px;
-}
 
+/**********************************************************************/
+/************************** Anime Graph ******************************/
+/**********************************************************************/
 
-
-.whole-graph-template-selected-year {
-  text-align: center;
-  font-size: 28px;
-  font-family: 'Dancing Script', cursive;
-}
-
-.whole-graph-template-container {
+/* Container for the whole graph - the timeline and the anime graph  */
+.whole-graph-petalscircles-container {
   background-color: var(--dark-background);
   color: var(--creme-white);
   width: 100%;
   padding-top: 30px;
   position: relative;
-}
-
-.whole-graph-template-tooltip {
-  position: absolute;
-  background-color: none;
-  top: 30%;
-  right: 10%;
-  width: 200px;
-  height: 200px;
-  border-radius: 100px;
+  margin: auto;
   text-align: center;
-  color: var(--creme-white);
 }
 
-.whole-graph-template-tooltip-title {
-  display: block;
-  font-size: 32px;
+.whole-graph-petalscircles-selected-year {
+  padding: 20px;
+  text-align: center;
+  font-size: 30px;
   font-family: 'Dancing Script', cursive;
-  margin-bottom: 10px;
-}
-.whole-graph-template-tooltip-info {
-  display: block;
-  font-size: 14px;
 }
 
+
+/****** Tooltip with the anime info in  the Anime Graph ******/
 .tooltip {
   opacity: 0;
   position: absolute;
@@ -111,22 +103,146 @@ li > span {
   border-radius: 20px;
   top: 0;
   left: 0;
-  padding: 0.6em;
+  padding: 0.8em;
   background: var(--creme-white);
   color: black;
   z-index: 10;
-  transition: all 0.5s ease-out;
+  transition: all 0.2s ease-out;
   pointer-events: none;  
   width: 200px;
 }
-
 .tooltip-title {
   display: block;
-  font-size: 28px;
+  font-size: 20px;
   font-family: 'Dancing Script', cursive;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .tooltip-info {
   display: block;
   font-size: 14px;
 }
+
+/* For the font of the season label */
+.season {
+  font-family: 'Dancing Script', cursive;
+}
+
+
+/****** Button for reset ******/
+.reset-button {
+  position: absolute;
+  display: inline-block;
+  color: var(--creme-white);
+  background: linear-gradient(#22223b, #970C3F); /*var(--dark-background);*/
+  border: 3px solid var(--creme-white);
+  border-radius: 200px;
+  padding: 8px;
+  font-size: 12px;
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+  outline: none;
+  cursor: default;
+  right: 10%;
+  bottom: 195px;
+  width: 65px;
+  height: 65px;
+}
+.reset-button:hover {
+  background: var(--dark-background);
+  box-shadow: 3px 3px 1px 1px #970C3F ;
+}
+
+
+/**********************************************************************/
+/***************************** Footer *********************************/
+/**********************************************************************/
+.whole-graph-petalscircles-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: var(--creme-white);
+  margin-top: 70px;
+  color: var(--dark-background);
+  padding: 30px 20px;
+  box-sizing: border-box;
+  font-size: 9px;
+  width: 100%;
+}
+.whole-graph-petalscircles-methodology {
+  font-weight: bold;
+}
+.whole-graph-petalscircles-methodology-list {
+  text-align: left;
+  margin-bottom: 10px;
+}
+.whole-graph-petalscircles-footer span {
+  font-weight: bold;
+}
+.whole-graph-petalscircles-p a:link {
+  color: var(--pink-colour);
+  text-decoration: none;
+}
+.whole-graph-petalscircles-p a:visited {
+  color: var(--pink-colour);
+}
+.whole-graph-petalscircles-p a:hover {
+  color: var(--purple-colour);
+}
+
+/**********************************************************************/
+/************************** Media Queries ******************************/
+/**********************************************************************/
+
+@media (min-width: 2000px) {
+  .whole-graph-petalscircles-instructions-list {
+    margin-left: 200px;
+  }
+}
+
+@media (min-width: 1500px) {
+  .reset-button {
+    right: 25%;
+  }
+}
+
+@media (max-width: 900px) {
+  #whole-graph-petalscircles-hero {
+    width: 70%;
+  }
+  .whole-graph-petalscircles-instructions {
+    font-size: 14px;
+  }
+  .whole-graph-petalscircles-instructions {
+    font-size: 13px;
+  }
+  .tooltip-title {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .tooltip-info {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  #whole-graph-petalscircles-hero {
+    width: 80%;
+  }
+  .whole-graph-petalscircles-instructions {
+    font-size: 15px;
+  }
+  .whole-graph-petalscircles-instructions {
+    font-size: 14px;
+  }
+  .tooltip-title {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .tooltip-info {
+    font-size: 12px;
+  }
+}
+

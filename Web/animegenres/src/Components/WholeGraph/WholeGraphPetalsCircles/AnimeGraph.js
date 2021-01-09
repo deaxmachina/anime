@@ -4,7 +4,6 @@ import _ from "lodash";
 import { orderedGenres, colourScaleOrderedGenres, hentaiGenres } from "./genres.js"
 
 
-
 // options for the petal paths //
 const petalPaths = [
     'M0 0 C50 50 50 100 0 100 C-50 100 -50 50 0 0',
@@ -12,13 +11,14 @@ const petalPaths = [
     'M-35 0 C-25 25 25 25 35 0 C50 25 25 75 0 100 C-25 75 -50 25 -35 0',
     'M0,0 C50,40 50,70 20,100 L0,85 L-20,100 C-50,70 -50,40 0,0',
     'M0 0 C50 25 50 75 0 100 C-50 75 -50 25 0 0',
-    "M 0,0 a 25,25 0 1,1 50,0a 25,25 0 1,1 -50,0"
+    "M 0,0 a 25,25 0 1,1 50,0a 25,25 0 1,1 -50,0",
+    "M 0 -1 c 99 -45 74 -95 149 -97 c 87 0 85 98 227 97 c -142 1 -144 87 -228 88 c -77 1 -48 -52 -148 -88",
+    "M 0 0 c 0 29 49 19 50 -16 c -17 5 -43 -55 -50 16",
+    "M 0 0 C 59 26 48 79 10 63 L 0 68 L -9 63 C -46 78 -59 27 0 0"
 ]
 
 
-const AnimeGraph = ({
-  data, allData, selectedYear, setSelectedYear 
-}) => {
+const AnimeGraph = ({ allData, selectedYear, setAllData}) => {
 
   const [selectedAnime, setSelectedAnime] = useState(null)
 
@@ -31,41 +31,54 @@ const AnimeGraph = ({
   const legendRef = useRef();
   const legendRectsAxisRef = useRef();
   const tooltipRef = useRef();
-  const svgLegendRef = useRef();
+  const resetButtonRef = useRef();
 
   /// constatns ///
   // dimensions 
   const width = 1300;
   const height = 850;
-  const legendWidth = width;
   const legendHeight = 60;
-  const margin = {top: 50, bottom: legendHeight + 0, right: 30, left: 60}
+  const margin = {top: 50, bottom: legendHeight + 20, right: 30, left: 120}
   
   // for the lower and upper limit of the popularity scale
   const minPopularity = 5
   const maxPopularity = 43
   // scale of the petals 
-  const petalScale = 0.008
+  const petalScale = 0.008 * 2;
   // colours 
-  const shapeBackgroundColour = "#010B14" // "#010B14" "#fff1e6"
-  const lightColour =  "#fff1e6" // "#010B14" "#fff1e6"
+  const shapeBackgroundColour = "#010B14";
+  const lightColour =  "#fff1e6";
   const circleOutlineHoverColour = "black"
   const HentaiColour = "#E2C6B6";
   const allGenresColour = "#003f66" //"#2a9d8f";
 
+  // for the filtering of anime 
+  const underratedPercentile = 0.6;
+  const underratedScore = 7.5; // represents high score 
+
+  const overratedPercentile = 0.75;
+  const overratedScore = 6.5; // represents low score 
+
 
   /// D3 Code ///
   useEffect(() => {
-    if (data && allData && selectedYear) {
+    if (allData && selectedYear) {
 
+      //////////////////////////////////////
+      ////////////// DATA //////////////////
+      //////////////////////////////////////
       // get only one year 
       let dataOneYear = _.filter(allData, {'air_year': parseInt(selectedYear)});
       // only the unique anime for the year 
       const dataOneYearUniq = _.uniqBy(dataOneYear, 'mal_id')
+      // get list of sorted members for computing the low and high quantiles
+      const sortedMembers = _.uniq(_.sortBy(allData, d => d.members).map(d => d.members))
+      const lowQuantileMembers = d3.quantile(sortedMembers, underratedPercentile)
+      const highQuantileMembers = d3.quantile(sortedMembers, overratedPercentile)
 
-      ////////////////////////////////
-      /////////// GRAPH //////////////
-      ////////////////////////////////
+      //////////////////////////////////////
+      /////////////// GRAPH ////////////////
+      //////////////////////////////////////
       /// Scales ///
       // X Scale 
       // use a band scale to position all the anime in the year horizontally 
@@ -73,12 +86,11 @@ const AnimeGraph = ({
       // the circles should move towards 
       const xScale = d3.scaleBand()
         .domain(['winter', 'summer', 'spring', 'fall']) // the seasons in a year 
-        //.domain(_.range(dataOneYear.length)) // number of anime in the year
-        .range([margin.left, width - margin.right])
+        .range([30, width - margin.right])
         .padding(0.1)
       // Y Scale - corresponds to the score of anime 
       const yScale = d3.scaleLinear()
-        .domain([d3.min(allData, d => d.score) + 1, d3.max(allData, d => d.score) + 1])
+        .domain([d3.min(allData, d => d.score) + 1.5, d3.max(allData, d => d.score) + 1])
         .range([height - margin.bottom, margin.top])
       // Popularity scale - number of members who have seen the anime 
       const popularityScale = d3.scaleSqrt()
@@ -86,23 +98,21 @@ const AnimeGraph = ({
         .range([minPopularity, maxPopularity])
 
       // add radius for convenience
-      dataOneYear.forEach(d => d.r = popularityScale(d.members))
+      dataOneYearUniq.forEach(d => d.r = popularityScale(d.members))
       // get list of the genres of anime
-      dataOneYear.forEach(d => d.genresList = _.map(d.genres, "name"))
+      dataOneYearUniq.forEach(d => d.genresList = _.map(d.genres, "name"))
       
 
       /// Axes ///
       // X Axis 
       const xAxis = g => g  
-        .attr("transform", `translate(${0}, ${margin.top/2})`)
+        .attr("transform", `translate(${100}, ${margin.top/2})`)
         .call(d3.axisBottom(xScale).tickFormat(i => i).tickSizeOuter(0))
         .call(g => g.select(".domain").remove())
         .call(g => g.selectAll("text")
           .style("text-anchor", "start")
-          .attr("font-size", "1.5em")
-          .style("font-variant", "small-caps")
-          .style("font-weight", "bold")
-          .attr("font-family", "sans-serif")
+          .attr("font-size", "1.9em")
+          .attr("class", "season")
           .style("color", lightColour)
         )
         .call(g => g.selectAll(".tick")
@@ -114,6 +124,17 @@ const AnimeGraph = ({
         .attr("transform", `translate(${margin.left}, ${0})`)
         .call(d3.axisLeft(yScale).ticks(3))
         .call(g => g.select(".domain").remove())
+        .call(g => g.select(".tick:last-of-type text").clone()
+          .attr("x", -height/2 + margin.top)
+          .attr("y", -margin.left / 2)
+          .attr("text-anchor", "start")
+          .attr("dy", "0.35em")
+          .attr("font-size", "12px")
+          .attr("fill-opacity", 1)
+          .attr("opacity", 1)
+          .attr("transform", `rotate(${-90})`)
+          .text("average user score of anime")
+        )
 
       /// Graph ///
       const svg = d3.select(gRef.current)
@@ -125,13 +146,11 @@ const AnimeGraph = ({
       const simulation = d3.forceSimulation(dataOneYearUniqWithScores, d => d.mal_id)
         // x is computed with the band scale 
         .force('x', d3.forceX().strength(0.3).x(d => xScale(d['air_season']) + xScale.bandwidth()/2))
-        //.force('x', d3.forceX().strength(0.2).x((d, i) => xScale(i) + xScale.bandwidth()/2)) // if not by season but for the whole year 
+        // y is computed with the score 
         .force('y', d3.forceY().strength(0.9).y(d => yScale(d['score'])))
-        .force('collide', d3.forceCollide().radius(d => d.r + 2.5).strength(1))
+        .force('collide', d3.forceCollide().radius(d => d.r + 2.5).strength(1)) // the + 2.5 is to leave some space between the circles 
   
-      // shapes - one for each anime; apply force simulation to these
-      // also apply any click events at this level 
-      console.log(simulation.nodes())
+      // shapes - one for each anime; apply force simulation to these; also apply any click events at this level 
       const shapes = svg
         .selectAll(".shape-container")
         .data(simulation.nodes(), d => d['mal_id'])
@@ -139,7 +158,6 @@ const AnimeGraph = ({
         .classed("shape-container", true)
           .attr("opacity", 0)
           .attr('transform', d => `translate(${ d.x },${ d.y })`) 
-
         
       // background for the shapes, e.g. 
       // a circle that contains the flowers for each anime
@@ -157,7 +175,7 @@ const AnimeGraph = ({
       const flowers = shapes.selectAll("path")
         .data(d => d.genres)
         .join("path")
-          .attr("d", petalPaths[3])
+          .attr("d", petalPaths[5]) // 7 or 5 
           // the last arg nodes gives us access to the whole data
           .attr("transform", function(d, i, nodes){
             const allData = d3.selectAll(nodes).data() // all data for this selection
@@ -180,7 +198,22 @@ const AnimeGraph = ({
               : HentaiColour
             return fill
           })
-          .attr("fill-opacity", 0.8)
+          .attr("fill-opacity", 0.83)
+          // same as fill
+          .attr("stroke", function(d, i, nodes){
+            const parentData = this.parentNode.__data__ // parent data
+            const genres = parentData.genres
+            const genresSorted = genres.sort((a, b) => {
+              return _.indexOf(orderedGenres, a.name) - _.indexOf(orderedGenres, b.name) 
+            })
+            const genre =  genresSorted[i].name // get genre from parent data 
+            const fill = _.includes(orderedGenres, genre) 
+              ? colourScaleOrderedGenres[_.indexOf(orderedGenres, genre)] 
+              : HentaiColour
+            return fill
+          })
+          .attr("stroke-width", 7)
+          .attr("stroke-opacity", 0.3)
 
       // ticks control the force simulation; translate the flowers to the right place
       function tick() {
@@ -195,24 +228,24 @@ const AnimeGraph = ({
         shapes
           .transition()
           .attr("opacity", 1)
-      }, 200);
+      }, 100);
       // show the initial arrangement
-      tick();
+      //tick();
 
       // call the axes 
       d3.select(yAxisRef.current).call(yAxis)
       d3.select(xAxisRef.current).call(xAxis)
 
 
-      ////////////////////////////////
-      /////////// LEGEND /////////////
-      ////////////////////////////////
+      //////////////////////////////////////////
+      //////////////// LEGEND //////////////////
+      //////////////////////////////////////////
       const legend = d3.select(legendRef.current)
         .attr("transform", `translate(${0}, ${height + margin.top})`)
 
       const xScaleLegend = d3.scaleBand()
         .domain([...orderedGenres, ...hentaiGenres]) 
-        .range([margin.left, width - margin.right])
+        .range([margin.left, width - margin.right + 45])
         .padding(0.1)
       
       const legendRects = legend
@@ -220,8 +253,8 @@ const AnimeGraph = ({
         .data([...orderedGenres, ...hentaiGenres])
         .join("rect")
         .classed("legend-rect", true)
-        .attr('height', 15)
-        .attr("width", 20)
+        .attr('height', 17)
+        .attr("width", 24)
         .attr("x", (d, i) => xScaleLegend(d) + xScaleLegend.bandwidth()/2)
         // fill based on genres, with the hentai genres separately and add a square with a different colour of "all" genres
         .attr('fill', (d, i) => _.includes(orderedGenres, d) 
@@ -278,67 +311,12 @@ const AnimeGraph = ({
         .data([0])
         .join("text")
         .classed("legend-selected-genre-text-instructions", true)
-          .attr("transform", `translate(${width - margin.right - 110}, ${-26})`)
-          .text("click on a square to filter by genre or")
+          .attr("transform", `translate(${width - margin.right + 50}, ${-15})`)
+          .text("click on a square to filter by genre")
           .attr("fill", lightColour)
           .style("text-anchor", "end")
-          .attr("font-size", "0.8em")
+          .attr("font-size", "0.85em")
           .attr("dy", "0.35em")
-
-        // button to select all genres 
-        const allGenresButtonG = legend
-          .selectAll(".all-genres-button-g")
-          .data([0])
-          .join("g")
-          .classed(".all-genres-button-g", true)
-          .attr("transform", `translate(${width - margin.right +1}, ${-26})`)
-          .on("click", function(e, datum) {
-            shapes.attr("opacity", 1)
-            legendSelectedGenreText.text("all genres")
-          })
-          // change button style when hovering
-          .on("mouseenter", function() {
-            allGenresButtonRect
-              .attr("fill", allGenresColour)
-              .attr("fill-opacity", 0.5)
-              .attr("stroke", lightColour)
-          })
-          .on("mouseleave", function() {
-            allGenresButtonRect
-              .attr("fill", shapeBackgroundColour)
-              .attr("stroke", allGenresColour)
-          })
-
-        // rect for the button
-        const allGenresButtonRect = allGenresButtonG
-          .selectAll(".legend-select-all-genres")
-          .data([0])
-          .join("rect")
-          .classed("legend-select-all-genres", true)
-            .attr("transform", `translate(${-100}, ${-13})`)
-            .attr("fill", shapeBackgroundColour)
-            .attr("width", 100)
-            .attr("height", 26)
-            .attr("stroke", allGenresColour)
-            .attr("stroke-width", 3)
-
-        // text on the button
-        const allGenresButtonText = allGenresButtonG
-          .selectAll(".legend-select-all-genres-text")
-          .data([0])
-          .join("text")
-          .classed("legend-select-all-genres-text", true)
-            .attr("transform", `translate(${-88}, ${-1})`)
-            .attr("fill", lightColour)
-            .text("all genres")
-            .style("text-anchor", "start")
-            .attr("font-size", "1em")
-            .style("font-variant", "small-caps")
-            .style("font-weight", "bold")
-            .attr("font-family", "sans-serif")
-            .attr("dy", "0.33em")
-            .attr('cursor', 'default')
-            .attr('pointer-events', 'none')
 
       /// Legend interactions ///
       legendRects.on("click", function(event, datum) {
@@ -360,20 +338,82 @@ const AnimeGraph = ({
           .attr("stroke", null)
       })
 
+      ////////////////////////////////////////
+      /////////// FILTER BUTTONS /////////////
+      ///////////////////////////////////////
 
-      /////////////////////////////
-      ////////// TOOLTIP //////////
-      /////////////////////////////
+      // button for popular but low score
+      const underratedButtonG = legend
+          .selectAll(".all-genres-button-g")
+          .data([0])
+          .join("g")
+          .classed(".all-genres-button-g", true)
+          .attr("transform", `translate(${width - margin.right}, ${-80})`)
+          .on("click", function(e, datum) {
+            shapes.attr("opacity", 1)
+            legendSelectedGenreText.text("all genres")
+          })
+          .on("click", function() {
+            const overratedAnime = _.filter(allData, function(anime){ 
+              return (anime.members >= highQuantileMembers && anime.score <= overratedScore)
+            })
+            shapes.attr("opacity", d => overratedAnime.includes(d) ? 1 : 0.1)
+          })
+          .on("mouseenter", function() {
+            underratedButtonRect
+              .attr("stroke-width", 3)
+          })
+          .on("mouseleave", function() {
+            underratedButtonRect
+              .attr("stroke-width", 1)
+          })
+        
+      // rect for the button
+      const underratedButtonRect = underratedButtonG
+          .selectAll(".legend-select-all-genres")
+          .data([0])
+          .join("rect")
+          .classed("legend-select-all-genres", true)
+            .attr("transform", `translate(${-109}, ${0})`)
+            .attr("fill", shapeBackgroundColour)
+            .attr("width", 160)
+            .attr("height", 28)
+            .attr("stroke", lightColour)
+            .attr("stroke-width", 1)
+
+      // text on the button
+      const underratedButtonText = underratedButtonG
+          .selectAll(".legend-select-all-genres-text")
+          .data([0])
+          .join("text")
+          .classed("legend-select-all-genres-text", true)
+            .attr("transform", `translate(${-95}, ${13})`)
+            .attr("fill", lightColour)
+            .text("popular but low score")
+            .style("text-anchor", "start")
+            .attr("font-size", "0.87em")
+            .style("font-variant", "small-caps")
+            .attr("font-family", "sans-serif")
+            .attr("dy", "0.33em")
+            .attr('cursor', 'default')
+            .attr('pointer-events', 'none')
+
+      // button for reset 
+      const resetButton = d3.select(resetButtonRef.current)
+        .on("click", function(){
+          shapes.attr("opacity", 1)
+        })
+
+
+      //////////////////////////////////////
+      ////////////// TOOLTIP ///////////////
+      //////////////////////////////////////
       // Include all the events here when an anime circle (shapes) is hovered or clicked 
       // i.e. the tooltip, stroke and the anime info that gets fetched 
       const tooltip = d3.select(tooltipRef.current)
       // events to move the tooltip 
       shapes.on("click", (event, element) => {
-        //console.log(element)
-        //console.log(element.title)
-        //console.log(element.members)
-        //console.log(element.score)
-        //setSelectedAnime(element.title)
+        console.log(element)
       })
       shapes.on("mouseenter", function(e, datum) {
         shapesBackground
@@ -381,13 +421,12 @@ const AnimeGraph = ({
           .attr("fill", d => d == datum ? lightColour : circleOutlineHoverColour)
         tooltip 
           .style('transform', d => `translate(
-            calc(-50% + ${datum.x}px),
-            calc(30% + ${datum.y}px)`
+              ${datum.x}px,
+              ${datum.y}px`
             ) 
           .style("opacity", 1)
         // set the selected anime to the one corresponing to the hovered element 
         setSelectedAnime(datum)
-        //console.log(datum)
       })
       shapes.on("mouseleave", function(e, datum) {
         shapesBackground
@@ -399,17 +438,12 @@ const AnimeGraph = ({
     } else {
       console.log("Missing data")
     }
-  }, [data, allData, selectedYear]);
+  }, [allData, selectedYear]);
 
-  // to select year from dropdown 
-  const selectYear = (e) => {
-    const currentSelectedYear = e.target.value;
-    setSelectedYear(currentSelectedYear)
-  }
 
   return (
-      <div id="anime-graph-container">
-         {/*{selectedAnime ? <h2>{selectedAnime}</h2> : null}*/}
+      <>
+        <h1 className="whole-graph-petalscircles-selected-year">{selectedYear}</h1>
         <svg 
           ref={svgRef} 
           width={width + margin.left + margin.right} 
@@ -424,6 +458,8 @@ const AnimeGraph = ({
           <g ref={legendRectsAxisRef}></g>
         </svg>
 
+        <button ref={resetButtonRef} className="reset-button">reset</button>
+
         <div id="tooltip" className="tooltip" ref={tooltipRef}>
           {selectedAnime 
           ? <div>
@@ -433,8 +469,7 @@ const AnimeGraph = ({
             </div> 
           : null}
         </div>
-        <h1>Some more</h1>
-      </div>
+      </>
   )
 };
 

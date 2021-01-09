@@ -20,10 +20,10 @@ const AnimeTimeline = ({
   const width = 1300;
   const heightRect = 100;
   const height = 100;
-  const margin = {top: 0, bottom: 45, right: 40, left: 40}
+  const margin = {top: 30, bottom: 45, right: 20, left: 20}
   // radius of the timeline circles 
-  const minRadiusTimeline = 3;
-  const maxRadiusTimeline = 15;
+  const minRadiusTimeline = 8;
+  const maxRadiusTimeline = 18;
   // colours 
   const shapeBackgroundColour = "#010B14" //  "#14213d" 
   const lowNumberColour = "#003f66" // "#4361ee" "#268ECF"
@@ -34,8 +34,6 @@ const AnimeTimeline = ({
     /// D3 Code ///
   useEffect(() => {
     if (data && allData) {
-
-      let dataOneYear = _.filter(allData, {'air_year': parseInt(selectedYear)});
 
       /// Scales ///
       // X Scale 
@@ -55,6 +53,8 @@ const AnimeTimeline = ({
         .domain(d3.extent(data, d => d.number_animes))
         .range([minRadiusTimeline, maxRadiusTimeline])
 
+      const g = d3.select(gRef.current)
+
       /// Axes ///
       // X Axis 
       const xAxis = g => g  
@@ -72,9 +72,20 @@ const AnimeTimeline = ({
         .call(g => g.selectAll(".tick")
           .style("color", axisTextColour)
         )
+      
+      // for the instructions text above the graph 
+      const instructionsText = g
+        .selectAll(".instructions-text")
+        .data(["click on a circle to filter anime by year"])
+        .join("text")
+        .classed("instructions-text", true)
+        .attr("transform", `translate(${margin.left + 5}, ${margin.top/2 - 5})`)
+        .text(d => d)
+        .attr("font-size", "12px")
+        .attr("fill", "white")
+        .attr("dy", "0.35em")
 
       /// Graph ///
-      const g = d3.select(gRef.current)
 
       // draw a rectangle behind the circles 
       const rectBackground = d3.select(rectRef.current)
@@ -148,11 +159,12 @@ const AnimeTimeline = ({
     } else {
       console.log("Missing data")
     }
-  }, [data, selectedYear, allData]);
+  }, [data, allData]);
 
 
   return (
     <>
+      <p>timeline - number of anime per year</p>
       <svg ref={svgRef} width={width} height={height}>
         <g ref={rectRef}></g>
         <g ref={gRef}></g>

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import _ from "lodash";
-import * as chroma from "chroma-js";
 import "./WholeGraphPetalsCircles.css";
-import dataLoad from "../../data/mal_scrape.json";
+import dataLoad from "../../data/mal_scrape_Jan8.json";
 import AnimeGraph from "./AnimeGraph";
 import AnimeTimeline from "./AnimeTimeline";
 import HeroSection from "./HeroSection";
+import Footer from "./Footer";
 
 
 
@@ -15,50 +15,77 @@ const WholeGraphPetalsCircles = () => {
   /// states ///
   const [data, setData] = useState(null);
   const [allData, setAllData] = useState(null)
-  const [selectedAnime, setSelectedAnime] = useState(null)
-  const [selectedYear, setSelectedYear] = useState(2006)
+  const [selectedYear, setSelectedYear] = useState(2020)
+  const [studios, setStudios] = useState(null);
 
   /// Data load ///
   useEffect(() => {
+    
     // transform data into just {year: 2020, number_anime: 800}
-    const counts = _.countBy(dataLoad, 'air_year')
-    // transform data into required array of obj format
-    const countsList = []
-      for (const [year, count] of Object.entries(counts)) {
-        countsList.push({
-          year: year,
-          number_animes: count
-        })
-      };
-    const filteredCountsList = _.filter(countsList, function(o) { return o.year >= 1970 });
+    // group the anime by year
+    const mygroup = _.groupBy(dataLoad, function(anime){return anime.air_year})
+    // transform the data so we end up with objects with year and number of unique anime in that year by mal_id 
+    const mygroupData = []
+      for (const [year, data] of Object.entries(mygroup)) {
+          mygroupData.push({
+              year: year,
+              number_animes: (_.uniqBy(data, 'mal_id')).length
+          })
+      }
+      // filter to the years that you want
+      const filteredCountsList = _.filter(mygroupData, function(o) { 
+        return o.year >= 1970 && o.year <= 2020
+      });
     setData(filteredCountsList)
-    setAllData(dataLoad)
-  }, []);
 
+    // Get list of studios 
+    // 1. add category for list of studios for each anime
+    dataLoad.forEach(d => d.studiosList = _.map(d.producers, "name"))
+    // 2. get list of studios; flatten it and count by number of appearance 
+    const studios = _.map(dataLoad, d => d.studiosList)
+    const studiosCounts = _.countBy(_.flatten(studios))
+    // 3. sort the studious by number of appearance 
+    let sortedStudios = _.chain(studiosCounts).
+        map(function(count, studio) {
+            return {
+                studio: studio,
+                count: count
+            }
+        })
+        .sortBy('count')
+        .value()
+    sortedStudios = _.reverse(sortedStudios)
+    setStudios(sortedStudios)
+    // how to get just the names 
+    // const sotedStudiosNames = sortedStudios.map(studio => studio.studio)
+    // console.log(sotedStudiosNames.slice(0,10))
+    setAllData(dataLoad)
+
+  }, []);
+      
 
   return (
-    <div className="whole-graph-template">
+    <div id="whole-graph-petalscircles">
       <HeroSection 
         selectedYear={selectedYear}
       />
-      <div className="whole-graph-template-container">
+      
+      <div className="whole-graph-petalscircles-container">
         <AnimeTimeline
           data={data}
           allData={allData}
-          selectedAnime={selectedAnime}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
-          setSelectedAnime={setSelectedAnime}
         />
         <AnimeGraph
-          data={data}
           allData={allData}
-          selectedAnime={selectedAnime}
           selectedYear={selectedYear}
-          setSelectedYear={setSelectedYear}
-          setSelectedAnime={setSelectedAnime}
+          setAllData={setAllData}
+          studios={studios}
         />
       </div>
+
+      <Footer />
     </div>
 
   )
